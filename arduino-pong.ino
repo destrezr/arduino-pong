@@ -124,7 +124,7 @@ void updateBall() {
 void resetBall() {
   ballX = SCREEN_WIDTH / 2;
   ballY = SCREEN_HEIGHT / 2;
-  ballSpeedX = random(2, 4);
+  ballSpeedX = random(1, 3);
   ballSpeedY = random(1, 3);
 
   if (random(2) == 0) {
