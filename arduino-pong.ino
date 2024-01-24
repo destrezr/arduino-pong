@@ -1,14 +1,15 @@
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <Adafruit_GFX.h>       // Adafruit_GFX-Bibliothek für die Grafik
+#include <Adafruit_SSD1306.h>   // Adafruit_SSD1306-Bibliothek für das OLED-Display
 
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
+#define SCREEN_WIDTH 128        // Breite des OLED-Displays in Pixeln
+#define SCREEN_HEIGHT 64        // Höhe des OLED-Displays in Pixeln
 
-#define OLED_RESET    -1
-#define OLED_ADDR     0x3C
+#define OLED_RESET    -1        // Pin für den Reset des OLED-Displays (-1 bedeutet, dass der Reset-Pin nicht verwendet wird)
+#define OLED_ADDR     0x3C      // I2C-Adresse des OLED-Displays
 
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);  // Instanziierung des Display-Objekts
 
+// Initialisierung von Variablen für die Paddel, den Ball, die Geschwindigkeiten und die Punkte
 int paddle1Y, paddle2Y;
 int paddleHeight = 12;
 int paddleWidth = 2;
@@ -19,42 +20,44 @@ int ballSize = 2;
 int ballSpeedX, ballSpeedY;
 
 int player1Score = 0, player2Score = 0;
-int winningScore = 4;
-int scoreDifference = 2;
+int winningScore = 4;          // Punktzahl, bei der ein Spieler gewinnt
+int scoreDifference = 2;       // Mindestunterschied zwischen den Punktzahlen zum Gewinnen
 
+// Pins für die Tasten zur Steuerung der Paddel
 const int paddle1UpButton = 10;
 const int paddle1DownButton = 11;
 const int paddle2UpButton = 8;
 const int paddle2DownButton = 9;
 
 void setup() {
-  pinMode(OLED_RESET, OUTPUT);
-  digitalWrite(OLED_RESET, LOW);
+  pinMode(OLED_RESET, OUTPUT);   // Setze den Reset-Pin des Displays als Ausgangspin
+  digitalWrite(OLED_RESET, LOW);  // Setze den Reset-Pin auf LOW, um das Display zurückzusetzen
   delay(50);
-  digitalWrite(OLED_RESET, HIGH);
+  digitalWrite(OLED_RESET, HIGH);  // Setze den Reset-Pin auf HIGH, um das Display zu aktivieren
 
-  display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
+  // Initialisiere das Display und überprüfe, ob die Initialisierung erfolgreich war
   if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
     Serial.println(F("SSD1306 allocation failed"));
     for (;;) {}
   }
 
+  display.display();  // Zeige den aktuellen Display-Inhalt an
+  delay(2000);
+
+  display.clearDisplay();  // Lösche den Display-Inhalt
   display.display();
   delay(2000);
 
-  display.clearDisplay();
-  display.display();
-  delay(2000);
-
+  // Setze die Anfangspositionen der Paddel
   paddle1Y = paddle2Y = (SCREEN_HEIGHT - paddleHeight) / 2;
 
+  // Konfiguriere die Tasten für die Paddelsteuerung
   pinMode(paddle1UpButton, INPUT_PULLUP);
   pinMode(paddle1DownButton, INPUT_PULLUP);
   pinMode(paddle2UpButton, INPUT_PULLUP);
   pinMode(paddle2DownButton, INPUT_PULLUP);
 
-
-  displayCountdown(3);
+  displayCountdown(3);  // Starte einen 3-Sekunden-Countdown vor dem Spielbeginn
 }
 
 void loop() {
@@ -70,17 +73,18 @@ void loop() {
     resetGame();
     displayCountdown(3);  // Starte einen 3-Sekunden-Countdown vor dem Neustart
   } else {
-    updatePaddles();
-    updateBall();
+    updatePaddles();  // Aktualisiere die Paddelpositionen basierend auf den Tasteneingaben
+    updateBall();     // Aktualisiere die Position des Balls und überprüfe Kollisionen
 
-    display.clearDisplay();
-    drawPaddles();
-    drawBall();
-    drawScores();
-    display.display();
+    display.clearDisplay();  // Lösche den aktuellen Display-Inhalt
+    drawPaddles();          // Zeichne die Paddel
+    drawBall();             // Zeichne den Ball
+    drawScores();           // Zeichne die Punktzahlen
+    display.display();      // Zeige den neuen Display-Inhalt an
   }
 }
 
+// Funktion zum Aktualisieren der Paddelpositionen basierend auf den Tasteneingaben
 void updatePaddles() {
   if (digitalRead(paddle1UpButton) == LOW && paddle1Y > 0) {
     paddle1Y -= paddleSpeed;
@@ -97,121 +101,36 @@ void updatePaddles() {
   }
 }
 
+// Funktion zum Aktualisieren der Ballposition und Überprüfen von Kollisionen
 void updateBall() {
   ballX += ballSpeedX;
   ballY += ballSpeedY;
 
+  // Überprüfe Kollision mit dem linken Paddel
   if (ballX <= paddleWidth && ballY >= paddle1Y && ballY <= paddle1Y + paddleHeight) {
-    ballSpeedX = -ballSpeedX;
+    ballSpeedX = -ballSpeedX;  // Ändere die Richtung des Balls horizontal
   }
+  // Überprüfe Kollision mit dem rechten Paddel
   if (ballX >= SCREEN_WIDTH - paddleWidth - ballSize && ballY >= paddle2Y && ballY <= paddle2Y + paddleHeight) {
-    ballSpeedX = -ballSpeedX;
+    ballSpeedX = -ballSpeedX;  // Ändere die Richtung des Balls horizontal
   }
 
+  // Überprüfe Kollision mit den oberen und unteren Rändern des Bildschirms
   if (ballY <= 0 || ballY >= SCREEN_HEIGHT - ballSize) {
-    ballSpeedY = -ballSpeedY;
+    ballSpeedY = -ballSpeedY;  // Ändere die Richtung des Balls vertikal
   }
 
+  // Überprüfe, ob der Ball das linke oder rechte Ende des Bildschirms erreicht hat
   if (ballX <= 0) {
-    player2Score++;
-    resetBall();
+    player2Score++;  // Spieler 2 bekommt einen Punkt
+    resetBall();      // Setze den Ball zurück
   } else if (ballX >= SCREEN_WIDTH - ballSize) {
-    player1Score++;
-    resetBall();
+    player1Score++;  // Spieler 1 bekommt einen Punkt
+    resetBall();      // Setze den Ball zurück
   }
 }
 
+// Funktion zum Zurücksetzen der Ballposition und -geschwindigkeit
 void resetBall() {
   ballX = SCREEN_WIDTH / 2;
-  ballY = SCREEN_HEIGHT / 2;
-  ballSpeedX = random(1, 3);
-  ballSpeedY = random(1, 3);
-
-  if (random(2) == 0) {
-    ballSpeedX = -ballSpeedX;
-  }
-
-  if (random(2) == 0) {
-    ballSpeedY = -ballSpeedY;
-  }
-}
-
-void drawPaddles() {
-  display.fillRect(0, paddle1Y, paddleWidth, paddleHeight, WHITE);
-  display.fillRect(SCREEN_WIDTH - paddleWidth, paddle2Y, paddleWidth, paddleHeight, WHITE);
-}
-
-void drawBall() {
-  display.fillRect(ballX, ballY, ballSize, ballSize, WHITE);
-}
-
-void drawScores() {
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.setCursor(SCREEN_WIDTH / 2 - 35, 5);
-  display.print("Punkte: ");
-  display.print(player1Score);
-  display.print(" - ");
-  display.print(player2Score);
-}
-
-void displayEndScreen(int score1, int score2) {
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setTextColor(WHITE);
-  display.setCursor(10, 20);
-
-  if (score1 > score2) {
-    display.print("Spieler 1 gewinnt!");
-  } else {
-    display.print("Spieler 2 gewinnt!");
-  }
-
-  display.setTextSize(1);
-  display.setCursor(12, 55);
-  display.print("Punkte: ");
-  display.print(score1);
-  display.print(" - ");
-  display.print(score2);
-}
-
-void waitForButtonPress() {
-  display.display();  // Zeige den Endbildschirm an
-  delay(500);  // Warte 500 Millisekunden, um Tastendrücke zu entprellen
-
-  while (digitalRead(paddle1UpButton) == HIGH && digitalRead(paddle1DownButton) == HIGH &&
-         digitalRead(paddle2UpButton) == HIGH && digitalRead(paddle2DownButton) == HIGH) {
-    // Warte auf einen Tastendruck
-  }
-
-  // Warte, bis alle Tasten losgelassen wurden
-  while (digitalRead(paddle1UpButton) == LOW || digitalRead(paddle1DownButton) == LOW ||
-         digitalRead(paddle2UpButton) == LOW || digitalRead(paddle2DownButton) == LOW) {
-    // Warte darauf, dass alle Tasten losgelassen werden
-  }
-}
-
-void resetGame() {
-  // Setze alle Variablen auf ihre Anfangswerte zurück
-  player1Score = player2Score = 0;
-  resetBall();
-  paddle1Y = paddle2Y = (SCREEN_HEIGHT - paddleHeight) / 2;
-
-  // Lösche den Display-Inhalt
-  display.clearDisplay();
-  display.display();
-}
-
-void displayCountdown(int seconds) {
-  for (int i = seconds; i > 0; i--) {
-    display.clearDisplay();
-    display.setTextSize(3);
-    display.setTextColor(WHITE);
-    display.setCursor((SCREEN_WIDTH - 20) / 2, (SCREEN_HEIGHT - 20) / 2);
-    display.print(i);
-    display.display();
-    delay(1000);
-  }
-  display.clearDisplay();
-  display.display();
-}
+  ballY = SCREEN_HEIGHT / 
