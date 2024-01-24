@@ -58,17 +58,16 @@ void setup() {
 }
 
 void loop() {
-  // Überprüfe, ob ein Spieler gewonnen hat
   if (player1Score >= winningScore && player1Score >= player2Score + scoreDifference) {
     displayEndScreen(player1Score, player2Score);
     waitForButtonPress();
     resetGame();
-    displayCountdown(3);  // Starte einen 3-Sekunden-Countdown vor dem Neustart
+    displayCountdown(3);
   } else if (player2Score >= winningScore && player2Score >= player1Score + scoreDifference) {
     displayEndScreen(player1Score, player2Score);
     waitForButtonPress();
     resetGame();
-    displayCountdown(3);  // Starte einen 3-Sekunden-Countdown vor dem Neustart
+    displayCountdown(3);
   } else {
     updatePaddles();
     updateBall();
@@ -176,28 +175,23 @@ void displayEndScreen(int score1, int score2) {
 }
 
 void waitForButtonPress() {
-  display.display();  // Zeige den Endbildschirm an
-  delay(500);  // Warte 500 Millisekunden, um Tastendrücke zu entprellen
+  display.display();
+  delay(500);
 
   while (digitalRead(paddle1UpButton) == HIGH && digitalRead(paddle1DownButton) == HIGH &&
          digitalRead(paddle2UpButton) == HIGH && digitalRead(paddle2DownButton) == HIGH) {
-    // Warte auf einen Tastendruck
   }
 
-  // Warte, bis alle Tasten losgelassen wurden
   while (digitalRead(paddle1UpButton) == LOW || digitalRead(paddle1DownButton) == LOW ||
          digitalRead(paddle2UpButton) == LOW || digitalRead(paddle2DownButton) == LOW) {
-    // Warte darauf, dass alle Tasten losgelassen werden
   }
 }
 
 void resetGame() {
-  // Setze alle Variablen auf ihre Anfangswerte zurück
   player1Score = player2Score = 0;
   resetBall();
   paddle1Y = paddle2Y = (SCREEN_HEIGHT - paddleHeight) / 2;
 
-  // Lösche den Display-Inhalt
   display.clearDisplay();
   display.display();
 }
